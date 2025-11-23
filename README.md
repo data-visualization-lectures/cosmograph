@@ -1,131 +1,21 @@
 
-<p align="center" style="color: #444">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://assets.cosmograph.app/cosmos-dark-theme.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://assets.cosmograph.app/cosmos-light-theme.svg">
-    <img align="center" width="225px" alt="cosmos.gl logo" src="https://assets.cosmograph.app/cosmos-light-theme.svg">
-  </picture>
-</p>
-<p align="center" style="font-size: 1.2rem;">GPU-accelerated Force Graph</p>
 
-**cosmos.gl** is a high-performance WebGL Force Graph algorithm and rendering engine. All the computations and drawing occur on the GPU in fragment and vertex shaders, avoiding expensive memory operations. It enables the real-time simulation of network graphs consisting of hundreds of thousands of points and links on modern hardware.
+## ファイル形式
 
-This engine powers 🪐 [Cosmograph](https://cosmograph.app) — a toolset for exploring complex networks and AI embeddings.
+このリポで扱う「データ形式」はざっくり2レイヤーあります。
 
-<video src="https://user-images.githubusercontent.com/755708/173392407-9b05cbb6-d39e-4c2c-ab41-50900cfda823.mp4" autoplay controls alt="Demo of cosmos.gl GPU-accelerated Force Graph">
-</video>
+  - cosmos.gl ライブラリ: ファイルを直接読む機能はなく、Float32Array などの配列で点座標・リンクを渡す API です。どんなファイルでも、アプリ側で読み込んで配列に変換できれば利用できます。
+  - Cosmograph のビューワ (cosmograph.app の「run」リンクと同様): 入力は CSV のエッジリストを想定しています。最低限 source,target 列があれば動きます（ID は数値/文字列どちらも可）。任意で weight やノード属性の列を増やせますが、ビジュアルで使うなら色やサイズをどう反映するかをアプリ側で決める必要があります。
 
-[📺 Comparison with other libraries](https://www.youtube.com/watch?v=HWk78hP8aEE)
-
-[🎮 Check out our storybook for examples](https://cosmosgl.github.io/graph/)
-
----
-
-### Quick Start
-
-Install the package:
-
-```bash
-npm install @cosmos.gl/graph
-```
-
-Get the data, [configure](https://cosmosgl.github.io/graph/?path=/docs/configuration--docs) the graph and run the simulation:
-
-```javascript
-import { Graph } from '@cosmos.gl/graph'
-
-const div = document.querySelector('div')
-const config = {
-  spaceSize: 4096,
-  simulationFriction: 0.1, // keeps the graph inert
-  simulationGravity: 0, // disables the gravity force
-  simulationRepulsion: 0.5, // increases repulsion between points
-  curvedLinks: true, // curved links
-  fitViewOnInit: true, // fit the view to the graph after initialization
-  fitViewDelay: 1000, // wait 1 second before fitting the view
-  fitViewPadding: 0.3, // centers the graph with a padding of ~30% of screen
-  rescalePositions: false, // rescale positions, useful when coordinates are too small
-  enableDrag: true, // enable dragging points
-  onClick: (pointIndex) => { console.log('Clicked point index: ', pointIndex) },
-  /* ... */
-}
-
-const graph = new Graph(div, config)
-
-// Points: [x1, y1, x2, y2, x3, y3]
-const pointPositions = new Float32Array([
-  0.0, 0.0,    // Point 1 at (0,0)
-  1.0, 0.0,    // Point 2 at (1,0)
-  0.5, 1.0,    // Point 3 at (0.5,1)
-]);
-
-graph.setPointPositions(pointPositions)
-
-// Links: [sourceIndex1, targetIndex1, sourceIndex2, targetIndex2]
-const links = new Float32Array([
-  0, 1,    // Link from point 0 to point 1
-  1, 2,    // Link from point 1 to point 2
-  2, 0,    // Link from point 2 to point 0
-]);
-
-graph.setLinks(links)
-
-graph.render()
-```
-
----
-
-### What's New in v2.0?
-
-cosmos.gl v2.0 introduces significant improvements in performance and data handling:
-
-- Enhanced data structures with WebGL-compatible formats.
-- Methods like `setPointPositions` and `setLinks` replace `setData` for improved efficiency.
-- Direct control over point and link attributes via Float32Array (e.g., colors, sizes, widths).
-- Updated event handling based on indices instead of objects.
-- New Point Clustering force (`setPointClusters`, `setClusterPositions` and `setPointClusterStrength`).
-- Ability to drag points.
-
-Check the [Migration Guide](./cosmos-2-0-migration-notes.md) for details.
-
----
-
-### Examples
-
-- [Basic Set-Up](https://cosmosgl.github.io/graph/?path=/story/examples-beginners--basic-set-up)
-
----
-
-### Showcase (via [cosmograph.app](https://cosmograph.app))
-
-- [Silk Road Case: Bitcoin Transactions](https://cosmograph.app/run/?data=https://cosmograph.app/data/184R7cFG-4lv.csv) ([📄 Read more](https://medium.com/@cosmograph.app/visualizing-darknet-6846dec7f1d7))
-- [ABACUS Shell](https://cosmograph.app/run/?data=https://cosmograph.app/data/ABACUS_shell_hd.csv) ([source](http://sparse.tamu.edu/Puri/ABACUS_shell_hd))
-- [The MathWorks, Inc: symmetric positive definite matrix](https://cosmograph.app/run/?data=https://cosmograph.app/data/Kuu.csv) ([source](https://sparse.tamu.edu/MathWorks/Kuu))
-
----
-
-### Known Issues
-
-- ~~Starting from version 15.4, iOS has stopped supporting the key WebGL extension powering our Many-Body force implementation (`EXT_float_blend`). We're investigating this issue and exploring solutions.~~ The latest iOS works again!
-- cosmos.gl doesn't work on Android devices that don't support the `OES_texture_float` WebGL extension.
+ つまり、GraphML/GEXF/JSON など既存フォーマットはそのまま「受け付ける」わけではなく、1) CSVエッジリストに変換するか、2) 独自パーサで配列にしてライブラリ API に渡す、のどちらかで対応します。どのフォーマットから変換したいか教えてもらえれば、変換手順を具体的に書きます。
 
 
----
+## リポのざっくり構成
 
-### Documentation
-- 🧑‍💻 [Quick Start](https://cosmosgl.github.io/graph/?path=/docs/welcome-to-cosmos--docs)
-- 🛠 [Configuration](https://cosmosgl.github.io/graph/?path=/docs/configuration--docs)
-- ⚙️ [API Reference](https://cosmosgl.github.io/graph/?path=/docs/api-reference--docs)
-- 🚀 [Migration Guide](https://github.com/cosmosgl/graph/blob/main/cosmos-2-0-migration-notes.md)
-
----
-
-### License
-
-**MIT**
-
----
-
-### Contact
-
-[GitHub Discussions](https://github.com/orgs/cosmosgl/discussions)
+  - ルート: package.json (ビルド/Storybook/lint 用スクリプト), rollup.config.js と vite.config.ts (ライブラリ bundling), tsconfig.json, 各種ポリシー/README 類。
+  - src/index.ts: 公開エントリ。下記モジュールを束ねる。
+  - src/graph/: グラフ本体の実装 (シミュレーション・描画の中核)。
+  - src/modules/: 点/リンク/ラベル/シェーダーなどの機能別モジュール群。
+  - src/stories/: Storybook 用のデモと設定。
+  - src/config.ts, src/variables.ts, src/helper.ts など: 設定値やユーティリティ。
+  - ビルド成果物は npm run build で dist/ に生成、Storybook は npm run build:storybook で storybook-static/ が生成される。
